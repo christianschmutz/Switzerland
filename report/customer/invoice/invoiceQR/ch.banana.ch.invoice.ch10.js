@@ -14,13 +14,13 @@
 //
 // @id = ch.banana.ch.invoice.ch10
 // @api = 1.0
-// @pubdate = 2021-07-16
+// @pubdate = 2021-08-31
 // @publisher = Banana.ch SA
-// @description = [CH10] Layout with Swiss QR Code
-// @description.it = [CH10] Layout with Swiss QR Code
-// @description.de = [CH10] Layout with Swiss QR Code
-// @description.fr = [CH10] Layout with Swiss QR Code
-// @description.en = [CH10] Layout with Swiss QR Code
+// @description = DEV [CH10] Layout with Swiss QR Code
+// @description.it = DEV [CH10] Layout with Swiss QR Code
+// @description.de = DEV [CH10] Layout with Swiss QR Code
+// @description.fr = DEV [CH10] Layout with Swiss QR Code
+// @description.en = DEV [CH10] Layout with Swiss QR Code
 // @doctype = *
 // @task = report.customer.invoice
 // @includejs = swissqrcode.js
@@ -51,6 +51,8 @@ var BAN_VERSION = "10.0.1";
 var BAN_EXPM_VERSION = "";
 var BAN_ADVANCED;
 
+var IS_ESTIMATES_INVOICES; // temporary variable, until "order number" and "order date" is implemented in integrated invoice 
+
 // Counter for the columns of the Details table
 var columnsNumber = 0;
 
@@ -72,6 +74,9 @@ function settingsDialog() {
   // Verify the banana version when user clicks on settings buttons
   var isCurrentBananaVersionSupported = bananaRequiredVersion(BAN_VERSION, BAN_EXPM_VERSION);
   if (isCurrentBananaVersionSupported) {
+
+    ///
+    isEstimatesInvoices(Banana.document);
 
     var userParam = initParam();
     var savedParam = Banana.document.getScriptSettings();
@@ -380,6 +385,34 @@ function convertParam(userParam) {
   }
   convertedParam.data.push(currentParam);
 
+  if (IS_ESTIMATES_INVOICES) { //At the moment only for estimates-invoices application
+    currentParam = {};
+    currentParam.name = 'info_order_number';
+    currentParam.parentObject = 'info_include';
+    currentParam.title = texts.param_info_order_number;
+    currentParam.type = 'bool';
+    currentParam.value = userParam.info_order_number ? true : false;
+    currentParam.defaultvalue = false;
+    currentParam.tooltip = texts.param_tooltip_info_order_number;
+    currentParam.readValue = function() {
+      userParam.info_order_number = this.value;
+    }
+    convertedParam.data.push(currentParam);
+
+    currentParam = {};
+    currentParam.name = 'info_order_date';
+    currentParam.parentObject = 'info_include';
+    currentParam.title = texts.param_info_order_date;
+    currentParam.type = 'bool';
+    currentParam.value = userParam.info_order_date ? true : false;
+    currentParam.defaultvalue = false;
+    currentParam.tooltip = texts.param_tooltip_info_order_date;
+    currentParam.readValue = function() {
+      userParam.info_order_date = this.value;
+    }
+    convertedParam.data.push(currentParam);
+  }
+
   currentParam = {};
   currentParam.name = 'info_customer';
   currentParam.parentObject = 'info_include';
@@ -681,7 +714,37 @@ function convertParam(userParam) {
       userParam[langCode+'_text_info_date'] = this.value;
     }
     convertedParam.data.push(currentParam);
-    
+
+    if (IS_ESTIMATES_INVOICES) { //At the moment only for estimates-invoices application
+      currentParam = {};
+      currentParam.name = langCode+'_text_info_order_number';
+      currentParam.parentObject = langCode;
+      currentParam.title = langTexts[langCodeTitle+'_param_text_info_order_number'];
+      currentParam.type = 'string';
+      currentParam.value = userParam[langCode+'_text_info_order_number'] ? userParam[langCode+'_text_info_order_number'] : '';
+      currentParam.defaultvalue = langTexts.order_number;
+      currentParam.tooltip = langTexts['param_tooltip_text_info_order_number'];
+      currentParam.language = langCode;
+      currentParam.readValueLang = function(langCode) {
+        userParam[langCode+'_text_info_order_number'] = this.value;
+      }
+      convertedParam.data.push(currentParam);
+
+      currentParam = {};
+      currentParam.name = langCode+'_text_info_order_date';
+      currentParam.parentObject = langCode;
+      currentParam.title = langTexts[langCodeTitle+'_param_text_info_order_date'];
+      currentParam.type = 'string';
+      currentParam.value = userParam[langCode+'_text_info_order_date'] ? userParam[langCode+'_text_info_order_date'] : '';
+      currentParam.defaultvalue = langTexts.order_date;
+      currentParam.tooltip = langTexts['param_tooltip_text_info_order_date'];
+      currentParam.language = langCode;
+      currentParam.readValueLang = function(langCode) {
+        userParam[langCode+'_text_info_order_date'] = this.value;
+      }
+      convertedParam.data.push(currentParam);
+    }
+
     currentParam = {};
     currentParam.name = langCode+'_text_info_customer';
     currentParam.parentObject = langCode;
@@ -1159,6 +1222,8 @@ function initParam() {
   userParam.shipping_address = false;
   userParam.info_invoice_number = true;
   userParam.info_date = true;
+  userParam.info_order_number = false;
+  userParam.info_order_date = false;
   userParam.info_customer = true;
   userParam.info_customer_vat_number = false;
   userParam.info_customer_fiscal_number = false;
@@ -1194,6 +1259,8 @@ function initParam() {
     }
     userParam[langCodes[i]+'_text_info_invoice_number'] = langTexts.invoice;
     userParam[langCodes[i]+'_text_info_date'] = langTexts.date;
+    userParam[langCodes[i]+'_text_info_order_number'] = langTexts.order_number;
+    userParam[langCodes[i]+'_text_info_order_date'] = langTexts.order_date;
     userParam[langCodes[i]+'_text_info_customer'] = langTexts.customer;
     userParam[langCodes[i]+'_text_info_customer_vat_number'] = langTexts.vat_number;
     userParam[langCodes[i]+'_text_info_customer_fiscal_number'] = langTexts.fiscal_number;
@@ -1297,6 +1364,12 @@ function verifyParam(userParam) {
   if (!userParam.info_date) {
     userParam.info_date = false;
   }
+  if (!userParam.info_order_number) {
+    userParam.info_order_number = false;
+  }
+  if (!userParam.info_order_date) {
+    userParam.info_order_date = false;
+  }
   if (!userParam.info_customer) {
     userParam.info_customer = false;
   }
@@ -1356,6 +1429,12 @@ function verifyParam(userParam) {
     }
     if (!userParam[langCodes[i]+'_text_info_date']) {
       userParam[langCodes[i]+'_text_info_date'] = langTexts.date;
+    }
+    if (!userParam[langCodes[i]+'_text_info_order_number']) {
+      userParam[langCodes[i]+'_text_info_order_number'] = langTexts.order_number;
+    }
+    if (!userParam[langCodes[i]+'_text_info_order_date']) {
+      userParam[langCodes[i]+'_text_info_order_date'] = langTexts.order_date;
     }
     if (!userParam[langCodes[i]+'_text_info_customer']) {
       userParam[langCodes[i]+'_text_info_customer'] = langTexts.customer;
@@ -1463,6 +1542,9 @@ function printDocument(jsonInvoice, repDocObj, repStyleObj) {
   // Verify the banana version when user clicks ok to print the invoice
   var isCurrentBananaVersionSupported = bananaRequiredVersion(BAN_VERSION, BAN_EXPM_VERSION);
   if (isCurrentBananaVersionSupported) {
+
+    ///
+    isEstimatesInvoices(Banana.document);
 
     var userParam = initParam();
     var savedParam = Banana.document.getScriptSettings();
@@ -1717,6 +1799,24 @@ function print_info_first_page(repDocObj, invoiceObj, texts, userParam) {
   } else {
     rows++;
   }
+
+  if (IS_ESTIMATES_INVOICES) {
+    if (userParam.info_order_number) {
+      tableRow = infoTable.addRow();
+      tableRow.addCell(userParam[lang+'_text_info_order_number'] + ":","",1);
+      tableRow.addCell(invoiceObj.document_info.order_number,"",1);
+    } else {
+      rows++;
+    }
+    if (userParam.info_order_date) {
+      tableRow = infoTable.addRow();
+      tableRow.addCell(userParam[lang+'_text_info_order_date'] + ":","",1);
+      tableRow.addCell(Banana.Converter.toLocaleDateFormat(invoiceObj.document_info.order_date),"",1);
+    } else {
+      rows++;
+    }
+  }
+
   if (userParam.info_customer) {
     tableRow = infoTable.addRow();
     tableRow.addCell(userParam[lang+'_text_info_customer'] + ":","",1);
@@ -2059,7 +2159,11 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         alignment = "left";
       }
 
-      if (columnsNames[j].trim().toLowerCase() === "description") {
+      if (IS_ESTIMATES_INVOICES && columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
+        var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
+        tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
+      }
+      else if (columnsNames[j].trim().toLowerCase() === "description") {
         //When 10:hdr with empty description, let empty line
         if (item.item_type && item.item_type.indexOf("header") === 0 && !item.description) {
           tableRow.addCell(" ", classNameEvenRow, 1);
@@ -2070,6 +2174,12 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
           descriptionCell.addParagraph(itemValue.value, "");
           descriptionCell.addParagraph(itemValue2.value, "");
+
+          /////////////
+
+          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row);
+
+          /////////////
         }
       }
       else if (columnsNames[j].trim().toLowerCase() === "quantity") {
@@ -2269,7 +2379,11 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         alignment = "left";
       }
 
-      if (columnsNames[j].trim().toLowerCase() === "description") {
+      if (IS_ESTIMATES_INVOICES && columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
+        var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
+        tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
+      }
+      else if (columnsNames[j].trim().toLowerCase() === "description") {
         //When 10:hdr with empty description, let empty line
         if (item.item_type && item.item_type.indexOf("header") === 0 && !item.description) {
           tableRow.addCell(" ", classNameEvenRow, 1);
@@ -2280,6 +2394,13 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
           descriptionCell.addParagraph(itemValue.value, "");
           descriptionCell.addParagraph(itemValue2.value, "");
+
+          /////////////
+
+          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row);
+
+          /////////////
+
         }
       }
       else if (columnsNames[j].trim().toLowerCase() === "quantity") {
@@ -2675,6 +2796,10 @@ function formatItemsValue(value, variables, columnName, className, item) {
   else if (columnName === "vatrate" || columnName === "vat_rate") {
     itemFormatted.value = Banana.Converter.toLocaleNumberFormat(Banana.SDecimal.abs(value));
     itemFormatted.className = className;
+  }
+  else if (columnName === "items") { // Items column of estimates-invoices only
+    itemFormatted.value = value;
+    itemFormatted.className = className;    
   }
   else if (columnName) {
     itemFormatted.value = value;
@@ -3330,6 +3455,8 @@ function setInvoiceTexts(language) {
     texts.shipping_address = "Indirizzo spedizione";
     texts.invoice = "Fattura";
     texts.date = "Data";
+    texts.order_number = "No ordine";
+    texts.order_date = "Data ordine";
     texts.customer = "No cliente";
     texts.vat_number = "No IVA";
     texts.fiscal_number = "No fiscale";
@@ -3373,6 +3500,8 @@ function setInvoiceTexts(language) {
     texts.param_info_include = "Informazioni";
     texts.param_info_invoice_number = "Numero fattura";
     texts.param_info_date = "Data fattura";
+    texts.param_info_order_number = "Numero ordine";
+    texts.param_info_order_date = "Data ordine";
     texts.param_info_customer = "Numero cliente";
     texts.param_info_customer_vat_number = "Numero IVA cliente";
     texts.param_info_customer_fiscal_number = "Numero fiscale cliente";
@@ -3392,6 +3521,8 @@ function setInvoiceTexts(language) {
     texts.languages_remove = "Desideri rimuovere '<removedLanguages>' dalla lista delle lingue?";
     texts.it_param_text_info_invoice_number = "Numero fattura";
     texts.it_param_text_info_date = "Data fattura";
+    texts.it_param_text_info_order_number = "Numero ordine";
+    texts.it_param_text_info_order_date = "Data ordine";
     texts.it_param_text_info_customer = "Numero cliente";
     texts.it_param_text_info_customer_vat_number = "Numero IVA cliente";
     texts.it_param_text_info_customer_fiscal_number = "Numero fiscale cliente";
@@ -3422,6 +3553,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_logo_name = "Inserisci il nome del logo";
     texts.param_tooltip_info_invoice_number = "Vista per includere il numero della fattura";
     texts.param_tooltip_info_date = "Vista per includere la data della fattura";
+    texts.param_tooltip_info_order_number = "Vista per includere il numero d'ordine";
+    texts.param_tooltip_info_order_date = "Vista per includere la data dell'ordine";
     texts.param_tooltip_info_customer = "Vista per includere il numero del cliente";
     texts.param_tooltip_info_customer_vat_number = "Vista per includere il numero IVA del cliente";
     texts.param_tooltip_info_customer_fiscal_number = "Vista per includere il numero fiscale del cliente";
@@ -3430,6 +3563,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_languages = "Aggiungi o rimuovi una o più lingue";
     texts.param_tooltip_text_info_invoice_number = "Inserisci un testo per sostituire quello predefinito";
     texts.param_tooltip_text_info_date = "Inserisci un testo per sostituire quello predefinito";
+    texts.param_tooltip_text_info_order_number = "Inserisci un testo per sostituire quello predefinito";
+    texts.param_tooltip_text_info_order_date = "Inserisci un testo per sostituire quello predefinito";
     texts.param_tooltip_text_info_customer = "Inserisci un testo per sostituire quello predefinito";
     texts.param_tooltip_text_info_customer_vat_number = "Inserisci un testo per sostituire quello predefinito";
     texts.param_tooltip_text_info_customer_fiscal_number = "Inserisci un testo per sostituire quello predefinito";
@@ -3488,6 +3623,8 @@ function setInvoiceTexts(language) {
     texts.shipping_address = "Lieferadresse";
     texts.invoice = "Rechnung";
     texts.date = "Datum";
+    texts.order_number = "Bestellnummer";
+    texts.order_date = "Bestelldatum";
     texts.customer = "Kundennummer";
     texts.vat_number = "MwSt/USt-Nummer";
     texts.fiscal_number = "Steuernummer";
@@ -3531,6 +3668,8 @@ function setInvoiceTexts(language) {
     texts.param_info_include = "Info";
     texts.param_info_invoice_number = "Rechnungsnummer";
     texts.param_info_date = "Rechnungsdatum";
+    texts.param_info_order_number = "Bestellnummer";
+    texts.param_info_order_date = "Bestelldatum";
     texts.param_info_customer = "Kundennummer";
     texts.param_info_customer_vat_number = "Kunden-MwSt/USt-Nummer";
     texts.param_info_customer_fiscal_number = "Kunden-Steuernummer";
@@ -3550,6 +3689,8 @@ function setInvoiceTexts(language) {
     texts.languages_remove = "Möchten Sie '<removedLanguages>' aus der Liste der Sprachen streichen?";
     texts.de_param_text_info_invoice_number = "Rechnungsnummer";
     texts.de_param_text_info_date = "Rechnungsdatum";
+    texts.de_param_text_info_order_number = "Bestellnummer";
+    texts.de_param_text_info_order_date = "Bestelldatum";
     texts.de_param_text_info_customer = "Kundennummer";
     texts.de_param_text_info_customer_vat_number = "Kunden-MwSt/USt-Nummer";
     texts.de_param_text_info_customer_fiscal_number = "Kunden-Steuernummer";
@@ -3580,6 +3721,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_logo_name = "Logo-Name eingeben";
     texts.param_tooltip_info_invoice_number = "Aktivieren, um Rechnungsnummer einzuschliessen";
     texts.param_tooltip_info_date = "Aktivieren, um Rechnungsdatum einzuschliessen";
+    texts.param_tooltip_info_order_number = "Aktivieren, um Bestellnummer einzuschliessen";
+    texts.param_tooltip_info_order_date = "Aktivieren, um Bestelldatum einzuschliessen";
     texts.param_tooltip_info_customer = "Aktivieren, um Kundennummer einzuschliessen";
     texts.param_tooltip_info_customer_vat_number = "Aktivieren, um Kunden-MwSt/USt-Nummer einzuschliessen";
     texts.param_tooltip_info_customer_fiscal_number = "Aktivieren, um Kunden-Steuernummer einzuschliessen";
@@ -3588,6 +3731,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_languages = "Sprachen hinzufügen oder entfernen";
     texts.param_tooltip_text_info_invoice_number = "Text eingeben, um Standardtext zu ersetzen";
     texts.param_tooltip_text_info_date = "Text eingeben, um Standardtext zu ersetzen";
+    texts.param_tooltip_text_info_order_number = "Text eingeben, um Standardtext zu ersetzen";
+    texts.param_tooltip_text_info_order_date = "Text eingeben, um Standardtext zu ersetzen";
     texts.param_tooltip_text_info_customer = "Text eingeben, um Standardtext zu ersetzen";
     texts.param_tooltip_text_info_customer_vat_number = "Text eingeben, um Standardtext zu ersetzen";
     texts.param_tooltip_text_info_customer_fiscal_number = "Text eingeben, um Standardtext zu ersetzen";
@@ -3646,6 +3791,8 @@ function setInvoiceTexts(language) {
     texts.shipping_address = "Adresse de livraison";
     texts.invoice = "Facture";
     texts.date = "Date";
+    texts.order_number = "Numéro de commande";
+    texts.order_date = "Date de commande";
     texts.customer = "Numéro Client";
     texts.vat_number = "Numéro de TVA";
     texts.fiscal_number = "Numéro fiscal";
@@ -3689,6 +3836,8 @@ function setInvoiceTexts(language) {
     texts.param_info_include = "Informations";
     texts.param_info_invoice_number = "Numéro de facture";
     texts.param_info_date = "Date facture";
+    texts.param_info_order_number = "Numéro de commande";
+    texts.param_info_order_date = "Date de commande";
     texts.param_info_customer = "Numéro Client";
     texts.param_info_customer_vat_number = "Numéro de TVA client";
     texts.param_info_customer_fiscal_number = "Numéro fiscal client";
@@ -3708,6 +3857,8 @@ function setInvoiceTexts(language) {
     texts.languages_remove = "Souhaitez-vous supprimer '<removedLanguages>' de la liste des langues?";
     texts.fr_param_text_info_invoice_number = "Numéro de facture";
     texts.fr_param_text_info_date = "Date facture";
+    texts.fr_param_text_info_order_number = "Numéro de commande";
+    texts.fr_param_text_info_order_date = "Date de commande";
     texts.fr_param_text_info_customer = "Numéro Client";
     texts.fr_param_text_info_customer_vat_number = "Numéro de TVA client";
     texts.fr_param_text_info_customer_fiscal_number = "Numéro fiscal client";
@@ -3738,6 +3889,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_logo_name = "Insérer le nom du logo";
     texts.param_tooltip_info_invoice_number = "Activer pour inclure le numéro de la facture";
     texts.param_tooltip_info_date = "Activer pour inclure la date de la facture";
+    texts.param_tooltip_info_order_number = "Activer pour inclure le numéro de commande";
+    texts.param_tooltip_info_order_date = "Activer pour inclure la date de commande";
     texts.param_tooltip_info_customer = "Activer pour inclure le numéro client";
     texts.param_tooltip_info_customer_vat_number = "Activer pour inclure le numéro de TVA du client";
     texts.param_tooltip_info_customer_fiscal_number = "Activer pour inclure le numéro fiscal du client";
@@ -3746,6 +3899,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_languages = "Ajouter ou supprimer une ou plusieurs langues";
     texts.param_tooltip_text_info_invoice_number = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_date = "Insérez un texte pour remplacer le texte par défaut";
+    texts.param_tooltip_text_info_order_number = "Insérez un texte pour remplacer le texte par défaut";
+    texts.param_tooltip_text_info_order_date = "Insérez un texte pour remplacer le texte par défaut"
     texts.param_tooltip_text_info_customer = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_customer_vat_number = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_customer_fiscal_number = "Insérez un texte pour remplacer le texte par défaut";
@@ -3804,6 +3959,8 @@ function setInvoiceTexts(language) {
     texts.shipping_address = "Shipping address";
     texts.invoice = "Invoice";
     texts.date = "Date";
+    texts.order_number = "Order No";
+    texts.order_date = "Order date";
     texts.customer = "Customer No";
     texts.vat_number = "VAT No";
     texts.fiscal_number = "Fiscal No";
@@ -3847,6 +4004,8 @@ function setInvoiceTexts(language) {
     texts.param_info_include = "Information";
     texts.param_info_invoice_number = "Invoice number";
     texts.param_info_date = "Invoice date";
+    texts.param_info_order_number = "Order number";
+    texts.param_info_order_date = "Order date";
     texts.param_info_customer = "Customer number";
     texts.param_info_customer_vat_number = "Customer VAT number";
     texts.param_info_customer_fiscal_number = "Customer fiscal number";
@@ -3866,6 +4025,8 @@ function setInvoiceTexts(language) {
     texts.languages_remove = "Do you want to remove '<removedLanguages>' from the language list?";
     texts.en_param_text_info_invoice_number = "Invoice number";
     texts.en_param_text_info_date = "Invoice date";
+    texts.en_param_text_info_order_number = "Order number";
+    texts.en_param_text_info_order_date = "Order date";
     texts.en_param_text_info_customer = "Customer number";
     texts.en_param_text_info_customer_vat_number = "Customer VAT number";
     texts.en_param_text_info_customer_fiscal_number = "Customer fiscal number";
@@ -3896,6 +4057,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_logo_name = "Enter the logo name";
     texts.param_tooltip_info_invoice_number = "Check to include the invoice number";
     texts.param_tooltip_info_date = "Check to include invoice date";
+    texts.param_tooltip_info_order_number = "Check to include order number";
+    texts.param_tooltip_info_order_date = "Check to include order date";
     texts.param_tooltip_info_customer = "Check to include customer number";
     texts.param_tooltip_info_customer_vat_number = "Check to include customer's VAT number";
     texts.param_tooltip_info_customer_fiscal_number = "Check to include customer's fiscal number";
@@ -3904,6 +4067,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_languages = "Add or remove one or more languages";
     texts.param_tooltip_text_info_invoice_number = "Enter text to replace the default one";
     texts.param_tooltip_text_info_date = "Enter text to replace the default";
+    texts.param_tooltip_text_info_order_number = "Enter text to replace the default";
+    texts.param_tooltip_text_info_order_date = "Enter text to replace the default";
     texts.param_tooltip_text_info_customer = "Enter text to replace the default";
     texts.param_tooltip_text_info_customer_vat_number = "Enter text to replace the default";
     texts.param_tooltip_text_info_customer_fiscal_number = "Enter text to replace the default";
@@ -4120,4 +4285,71 @@ function isBananaAdvanced(requiredVersion, expmVersion) {
     return false;
   }
 }
+
+
+////////
+function isEstimatesInvoices(banDoc) {
+  var fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
+  var fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
+  if (fileTypeGroup === "400" && fileTypeNumber === "400") {
+    IS_ESTIMATES_INVOICES = true;
+  }
+  else {
+    IS_ESTIMATES_INVOICES = false;
+  }
+
+}
+///////
+
+function getAdditionalDescriptions(banDoc, descriptionCell, originRow) {
+  /**
+   * Check Description2, Description3, Description4, ... 
+   * The content of those columns is printed on multiple lines
+   */
+
+  let fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
+  let fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
+
+  // Integrated invoices
+  if (fileTypeGroup !== "400" && fileTypeNumber !== "400") {
+
+    //Return all xml column names
+    let table = banDoc.table('Transactions');
+    let tColumnNames = table.columnNames;
+    let descriptionsColumns = [];
+
+    //Get only "DescriptionXX" columns
+    for (let i = 0; i < tColumnNames.length; i++) {
+      if (tColumnNames[i].indexOf('Description') > -1) {
+        descriptionsColumns.push(tColumnNames[i]);
+      }
+    }
+
+    //Sort the array of description columns to have the default "Description" column as first element
+    //Then we can remove it in order to have only additional descriptions (Description2, Description3, ...)
+    descriptionsColumns.sort();
+    descriptionsColumns = descriptionsColumns.slice(1);
+
+    //Add each additional description as new paragraph in the description cell of the invoice details table
+    if (descriptionsColumns.length > 0) {
+      for (let i = 0; i < table.rowCount; i++) {
+        let tRow = table.row(i);
+        if (tRow.rowNr.toString() === originRow.toString()) { 
+          for (let j = 0; j < descriptionsColumns.length; j++) {
+            let desc = tRow.value(descriptionsColumns[j]);
+            //descriptionCell.addParagraph(desc, "");
+            addMdBoldText(descriptionCell, desc);
+          }      
+        }
+      }
+    }
+  }
+
+  // Estimates and Invoices
+  else { 
+    //...
+  }
+
+}
+
 

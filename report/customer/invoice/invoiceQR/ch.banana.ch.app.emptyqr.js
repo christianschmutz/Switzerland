@@ -1,4 +1,4 @@
-// Copyright [2020] [Banana.ch SA - Lugano Switzerland]
+// Copyright [2021] [Banana.ch SA - Lugano Switzerland]
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 //
 // @id = ch.banana.ch.app.emptyqr
 // @api = 1.0
-// @pubdate = 2020-11-20
+// @pubdate = 2021-08-23
 // @publisher = Banana.ch SA
 // @description = QR-bill with empty amount and address
 // @description.it = QR-bill with empty amount and address
@@ -23,6 +23,7 @@
 // @description.en = QR-bill with empty amount and address
 // @doctype = *
 // @task = app.command
+// @timeout = -1
 // @includejs = swissqrcode.js
 // @includejs = checkfunctions.js
 
@@ -83,8 +84,29 @@ function exec(string) {
 
 function printReport(banDoc, invoiceObj, report, stylesheet, qrSettings) {
   var report = Banana.Report.newReport("QR with empty amount and address");
-  report.addParagraph("The QR payment part without address and amount is at the bottom of the page.", "suggestion");
-    
+
+
+  var userParam = initUserParam();
+
+  // Retrieve saved param
+  var savedParam = Banana.document.getScriptSettings();
+  if (savedParam && savedParam.length > 0) {
+      userParam = JSON.parse(savedParam);
+  }
+
+  // If needed show the settings dialog to the user
+  if (!options || !options.useLastSettings) {
+      userParam = settingsDialog(); // From properties
+  }
+
+  if (!userParam) {
+      return "@Cancel";
+  }
+
+  if (userParam.print_msg_text) {
+    report.addParagraph("The QR payment part without address and amount is at the bottom of the page.", "suggestion");
+  }
+
   var qrBill = new QRBill(banDoc, qrSettings);
   qrBill.printQRCode(invoiceObj, report, stylesheet, qrSettings);
 
@@ -283,4 +305,110 @@ function bananaRequiredVersion(requiredVersion, expmVersion) {
     return false;
   }
   return true;
+}
+
+
+
+function convertParam(userParam) {
+
+  //language
+  var lang = 'en';
+  if (Banana.document.locale) {
+    lang = Banana.document.locale;
+  }
+  if (lang.length > 2) {
+    lang = lang.substr(0, 2);
+  }
+
+  //parameters
+  var convertedParam = {};
+  convertedParam.version = '1.0';
+  convertedParam.data = [];
+
+  var currentParam = {};
+  currentParam.name = 'print_msg_text';
+  currentParam.title = '';
+  if (lang === 'it') {
+    currentParam.title = 'Stampa il messaggio a inizio pagina.';
+  } else if (lang === 'fr') {
+    currentParam.title = 'Imprimez le message en haut de la page.';
+  } else if (lang === 'de') {
+    currentParam.title = 'Drucken Sie die Nachricht oben auf der Seite aus.';
+  } else {
+    currentParam.title = 'Print the message at the top of the page';
+  }
+  currentParam.type = 'bool';
+  currentParam.value = userParam.print_msg_text ? true : false;
+  currentParam.readValue = function() {
+      userParam.print_msg_text = this.value;
+  }
+  convertedParam.data.push(currentParam);
+
+  return convertedParam;
+}
+
+function initUserParam() {
+
+  var userParam = {};
+  userParam.print_msg_text = true;
+  return userParam;
+
+}
+
+function parametersDialog(userParam) {
+
+  if (typeof(Banana.Ui.openPropertyEditor) !== 'undefined') {
+      //language
+      var lang = 'en';
+      if (Banana.document.locale) {
+        lang = Banana.document.locale;
+      }
+      if (lang.length > 2) {
+        lang = lang.substr(0, 2);
+      }
+
+      //parameters
+      var dialogTitle = '';
+      if (lang === 'it') {
+        dialogTitle = 'Impostazioni';
+      } else if (lang === 'fr') {
+        dialogTitle = 'Paramètres';
+      } else if (lang === 'de') {
+        dialogTitle = 'Einstellungen';
+      } else {
+        dialogTitle = 'Settings';
+      }
+      var convertedParam = convertParam(userParam);
+      var pageAnchor = 'dlgSettings';
+      if (!Banana.Ui.openPropertyEditor(dialogTitle, convertedParam, pageAnchor)) {
+          return null;
+      }
+      
+      for (var i = 0; i < convertedParam.data.length; i++) {
+          // Read values to userParam (through the readValue function)
+          convertedParam.data[i].readValue();
+      }
+  }
+  
+  return userParam;
+}
+
+/* Save the period for the next time the script is run */
+function settingsDialog() {
+  
+  var scriptform = initUserParam();
+
+  // Retrieve saved param
+  var savedParam = Banana.document.getScriptSettings();
+  if (savedParam && savedParam.length > 0) {
+      scriptform = JSON.parse(savedParam);
+  }
+
+  scriptform = parametersDialog(scriptform); // From propertiess
+  if (scriptform) {
+      var paramToString = JSON.stringify(scriptform);
+      Banana.document.setScriptSettings(paramToString);
+  }
+  
+  return scriptform;
 }
