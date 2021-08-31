@@ -559,6 +559,19 @@ function convertParam(userParam) {
   convertedParam.data.push(currentParam);
 
   currentParam = {};
+  currentParam.name = 'details_additional_descriptions';
+  currentParam.parentObject = 'details_include';
+  currentParam.title = texts.param_details_additional_descriptions;
+  currentParam.type = 'bool';
+  currentParam.value = userParam.details_additional_descriptions ? true : false;
+  currentParam.defaultvalue = false;
+  currentParam.tooltip = texts.param_tooltip_details_additional_descriptions;
+  currentParam.readValue = function() {
+   userParam.details_additional_descriptions = this.value;
+  }
+  convertedParam.data.push(currentParam);
+
+  currentParam = {};
   currentParam.name = 'footer_include';
   currentParam.parentObject = 'include';
   currentParam.title = texts.param_footer_include;
@@ -1234,6 +1247,7 @@ function initParam() {
   userParam.details_columns_titles_alignment = 'left;right;center;right;right';
   userParam.details_columns_alignment = 'left;right;center;right;right';
   userParam.details_gross_amounts = false;
+  userParam.details_additional_descriptions = false;
   userParam.footer_add = false;
   userParam.footer_horizontal_line = true;
 
@@ -1399,6 +1413,9 @@ function verifyParam(userParam) {
   }
   if (!userParam.details_gross_amounts) {
     userParam.details_gross_amounts = false;
+  }
+  if (!userParam.details_additional_descriptions) {
+    userParam.details_additional_descriptions = false;
   }
   if (!userParam.footer_add) {
     userParam.footer_add = false;
@@ -2177,7 +2194,7 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
 
           /////////////
 
-          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row);
+          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
 
           /////////////
         }
@@ -2397,7 +2414,7 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
 
           /////////////
 
-          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row);
+          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
 
           /////////////
 
@@ -3513,6 +3530,7 @@ function setInvoiceTexts(language) {
     texts.param_details_columns_titles_alignment = "Allineamento titoli";
     texts.param_details_columns_alignment = "Allineamento testi";
     texts.param_details_gross_amounts = "Importi lordi (IVA inclusa)";
+    texts.param_details_additional_descriptions = "Stampa descrizioni supplementari";
     texts.param_footer_include = "Piè di pagina";
     texts.param_footer_add = "Stampa piè di pagina";
     texts.param_footer_horizontal_line = "Stampa bordo di separazione"
@@ -3589,6 +3607,7 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_shipping_address = "Vista per stampare l'indirizzo di spedizione";
     texts.param_tooltip_address_left = "Vista per allineare l'indirizzo del cliente a sinistra";
     texts.param_tooltip_details_gross_amounts = "Vista per stampare i dettagli della fattura con gli importi al lordo e IVA inclusa";
+    texts.param_tooltip_details_additional_descriptions = "Vista per stampare descrizioni supplementari";
     texts.param_tooltip_text_final = "Inserisci un testo per sostituire quello predefinito";
     texts.param_tooltip_footer_add = "Vista stampare il piè di pagina";
     texts.param_tooltip_footer = "Inserisci il testo piè di pagina";
@@ -3681,6 +3700,7 @@ function setInvoiceTexts(language) {
     texts.param_details_columns_titles_alignment = "Titelausrichtung";
     texts.param_details_columns_alignment = "Textausrichtung";
     texts.param_details_gross_amounts = "Bruttobeträge (inklusive MwSt/USt)";
+    texts.param_details_additional_descriptions = "Zusätzliche Beschreibungen drucken";
     texts.param_footer_include = "Fusszeile";
     texts.param_footer_add = "Fusszeile drucken";
     texts.param_footer_horizontal_line = "Trennlinie drucken";
@@ -3757,6 +3777,7 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_shipping_address = "Aktivieren, um Lieferadresse zu drucken";
     texts.param_tooltip_address_left = "Aktivieren, um Kundenadresse auf der linken Seite zu drucken";
     texts.param_tooltip_details_gross_amounts = "Aktivieren, um Rechnungsdetails mit Bruttobeträgen und enthaltener MwSt/USt zu drucken";
+    texts.param_tooltip_details_additional_descriptions = "Aktivieren, um Zusätzliche Beschreibungen zu drucken";
     texts.param_tooltip_text_final = "Text eingeben, um Standardtext zu ersetzen";
     texts.param_tooltip_footer_add = "Aktivieren, um Fusszeile unten auf der Seite zu drucken";
     texts.param_tooltip_footer = "Fusszeilentext eingeben";
@@ -3849,6 +3870,7 @@ function setInvoiceTexts(language) {
     texts.param_details_columns_titles_alignment = "Alignement des titres";
     texts.param_details_columns_alignment = "Alignement des textes";
     texts.param_details_gross_amounts = "Montants bruts (TVA incluse)";
+    texts.param_details_additional_descriptions = "Imprimer des descriptions supplémentaires";
     texts.param_footer_include = "Pied de page";
     texts.param_footer_add = "Imprimer pied de page";
     texts.param_footer_horizontal_line = "Imprimer la bordure de séparation";
@@ -3925,6 +3947,7 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_shipping_address = "Activer pour imprimer l'adresse de livraison";
     texts.param_tooltip_address_left = "Activer pour aligner l'adresse du client à gauche";
     texts.param_tooltip_details_gross_amounts = "Activer pour imprimer les détails de la facture avec les montants bruts et la TVA incluse";
+    texts.param_tooltip_details_additional_descriptions = "Activer pour imprimer des descriptions supplémentaires";
     texts.param_tooltip_text_final = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_footer_add = "Activer pour imprimer le pied de page";
     texts.param_tooltip_footer = "Insérer le texte pour la pied de page";
@@ -4017,6 +4040,7 @@ function setInvoiceTexts(language) {
     texts.param_details_columns_titles_alignment = "Titles alignment";
     texts.param_details_columns_alignment = "Texts alignment";
     texts.param_details_gross_amounts = "Gross amounts (VAT included)";
+    texts.param_details_additional_descriptions = "Print additional descriptions";
     texts.param_footer_include = "Footer";
     texts.param_footer_add = "Print footer";
     texts.param_footer_horizontal_line = "Print separating border";
@@ -4093,6 +4117,7 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_shipping_address = "Check to print the shipping address";
     texts.param_tooltip_address_left = "Check to align customer address on the left";
     texts.param_tooltip_details_gross_amounts = "Check to print invoice details with gross amounts and VAT included";
+    texts.param_tooltip_details_additional_descriptions = "Check to print additional descriptions";
     texts.param_tooltip_text_final = "Enter text to replace the default";
     texts.param_tooltip_footer_add = "Check to print the footer";
     texts.param_tooltip_footer = "Enter footer text";
@@ -4301,55 +4326,92 @@ function isEstimatesInvoices(banDoc) {
 }
 ///////
 
-function getAdditionalDescriptions(banDoc, descriptionCell, originRow) {
+function getAdditionalDescriptions(banDoc, descriptionCell, originRow, itemNumber, userParam) {
   /**
    * Check Description2, Description3, Description4, ... 
    * The content of those columns is printed on multiple lines
    */
 
-  let fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
-  let fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
+  if (userParam.details_additional_descriptions) {
 
-  // Integrated invoices
-  if (fileTypeGroup !== "400" && fileTypeNumber !== "400") {
+    let fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
+    let fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
 
-    //Return all xml column names
-    let table = banDoc.table('Transactions');
-    let tColumnNames = table.columnNames;
-    let descriptionsColumns = [];
+    //
+    // INTEGRATED INVOICE
+    //
+    if (fileTypeGroup !== "400" && fileTypeNumber !== "400") {
 
-    //Get only "DescriptionXX" columns
-    for (let i = 0; i < tColumnNames.length; i++) {
-      if (tColumnNames[i].indexOf('Description') > -1) {
-        descriptionsColumns.push(tColumnNames[i]);
+      //Return all xml column names
+      let table = banDoc.table('Transactions');
+      let tColumnNames = table.columnNames;
+      let descriptionsColumns = [];
+
+      //Get only "DescriptionXX" columns
+      for (let i = 0; i < tColumnNames.length; i++) {
+        if (tColumnNames[i].match(/^Description\d+$/)) {
+          descriptionsColumns.push(tColumnNames[i]);
+        }
+      }
+
+      //Sort the array
+      descriptionsColumns.sort();
+
+      //Add each additional description as new paragraph in the description cell of the invoice details table
+      if (descriptionsColumns.length > 0) {
+        for (let i = 0; i < table.rowCount; i++) {
+          let tRow = table.row(i);
+          if (tRow.rowNr.toString() === originRow.toString()) {
+            for (let j = 0; j < descriptionsColumns.length; j++) {
+              let desc = tRow.value(descriptionsColumns[j]);
+              if (desc) {
+                descriptionCell.addParagraph(desc, "");
+              }
+            }
+          }
+        }
       }
     }
 
-    //Sort the array of description columns to have the default "Description" column as first element
-    //Then we can remove it in order to have only additional descriptions (Description2, Description3, ...)
-    descriptionsColumns.sort();
-    descriptionsColumns = descriptionsColumns.slice(1);
+    //
+    // ESTIMATES & INVOICES
+    //
+    else {
+      //Return all xml column names
+      let table = banDoc.table('Items');
+      let tColumnNames = table.columnNames;
+      let descriptionsColumns = [];
 
-    //Add each additional description as new paragraph in the description cell of the invoice details table
-    if (descriptionsColumns.length > 0) {
-      for (let i = 0; i < table.rowCount; i++) {
-        let tRow = table.row(i);
-        if (tRow.rowNr.toString() === originRow.toString()) { 
-          for (let j = 0; j < descriptionsColumns.length; j++) {
-            let desc = tRow.value(descriptionsColumns[j]);
-            //descriptionCell.addParagraph(desc, "");
-            addMdBoldText(descriptionCell, desc);
-          }      
+      //Get only "DescriptionXX" columns
+      for (let i = 0; i < tColumnNames.length; i++) {
+        if (tColumnNames[i].match(/^Description\d+$/)) {
+          descriptionsColumns.push(tColumnNames[i]);
+        }
+      }
+
+      //Sort the array
+      descriptionsColumns.sort();
+
+      //Add each additional description as new paragraph in the description cell of the invoice details table
+      if (descriptionsColumns.length > 0) {
+        for (let i = 0; i < table.rowCount; i++) {
+          let tRow = table.row(i);
+          let id = tRow.value("RowId");
+          if (id === itemNumber) {
+            for (let j = 0; j < descriptionsColumns.length; j++) {
+              let desc = tRow.value(descriptionsColumns[j]);
+              if (desc) {
+                descriptionCell.addParagraph(desc, "");
+              }
+            }    
+          }
         }
       }
     }
   }
-
-  // Estimates and Invoices
-  else { 
-    //...
+  else {
+    return;
   }
-
 }
 
 
