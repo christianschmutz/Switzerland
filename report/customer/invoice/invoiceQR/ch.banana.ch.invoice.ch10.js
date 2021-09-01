@@ -14,7 +14,7 @@
 //
 // @id = ch.banana.ch.invoice.ch10
 // @api = 1.0
-// @pubdate = 2021-08-31
+// @pubdate = 2021-09-01
 // @publisher = Banana.ch SA
 // @description = DEV [CH10] Layout with Swiss QR Code
 // @description.it = DEV [CH10] Layout with Swiss QR Code
@@ -2191,12 +2191,7 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
           descriptionCell.addParagraph(itemValue.value, "");
           descriptionCell.addParagraph(itemValue2.value, "");
-
-          /////////////
-
-          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
-
-          /////////////
+          addMultipleLinesDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
         }
       }
       else if (columnsNames[j].trim().toLowerCase() === "quantity") {
@@ -2232,18 +2227,16 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         var userColumnValue = "";
         var columnsName = columnsNames[j];
         var itemValue = "";
-        //User defined columns, in settings dialog, must start with "T."
-        //ex. column transaction table = "DateWork"; column in settings dialog = "T.DateWork"
+        //User defined columns only available with advanced version
+        //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
-        if (columnsName.startsWith("T.")) {
-          if (BAN_ADVANCED) {
-            columnsName = columnsName.substring(2);
-            userColumnValue = getUserColumnValue(banDoc, item.origin_row, columnsName);
-            itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item);         
-          }
-          else {
-            customColumnMsg = "The customization with custom columns requires Banana Accounting+ Advanced";
-          }
+        if (BAN_ADVANCED) {
+          userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
+          columnsName = columnsName.substring(2);
+          itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item); 
+        }
+        else {
+          customColumnMsg = "The customization with custom columns requires Banana Accounting+ Advanced";
         }
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
       }
@@ -2411,13 +2404,7 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
           descriptionCell.addParagraph(itemValue.value, "");
           descriptionCell.addParagraph(itemValue2.value, "");
-
-          /////////////
-
-          getAdditionalDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
-
-          /////////////
-
+          addMultipleLinesDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
         }
       }
       else if (columnsNames[j].trim().toLowerCase() === "quantity") {
@@ -2453,24 +2440,22 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         var userColumnValue = "";
         var columnsName = columnsNames[j];
         var itemValue = "";
-        //User defined columns, in settings dialog, must start with "T."
-        //ex. column transaction table = "DateWork"; column in settings dialog = "T.DateWork"
+        //User defined columns only available with advanced version
+        //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
-        if (columnsName.startsWith("T.")) {
-          if (BAN_ADVANCED) {
-            columnsName = columnsName.substring(2);
-            userColumnValue = getUserColumnValue(banDoc, item.origin_row, columnsName);
-            itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item);
-          }
-          else {
-            customColumnMsg = "The customization with custom columns requires Banana Accounting+ Advanced";
-          }
+        if (BAN_ADVANCED) {
+          userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
+          columnsName = columnsName.substring(2);
+          itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item); 
+        }
+        else {
+          customColumnMsg = "The customization with custom columns requires Banana Accounting+ Advanced";
         }
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
       }
     }
   }
-  // Show message when using "T.Column" with a non advanced version of Banana+
+  // Show message when using custom column with a non advanced version of Banana+
   if (customColumnMsg.length > 0) {
     banDoc.addMessage(customColumnMsg);
   }
@@ -3009,23 +2994,35 @@ function includeEmbeddedJavascriptFile(banDoc, texts, userParam) {
   }
 }
 
-function getUserColumnValue(banDoc, originRow, column) {
+function getUserColumnValue(banDoc, originRow, itemNumber, column) {
 
   /*
-    Take the value from a custom user column of the table Transactions.
-    User can add new custom columns on the Transactions table and include
+    Take the value from a custom column of the table Transactions/Items.
+    User can add new custom columns on the Transactions/Items tables and include
     them into the invoice details table.
   */
 
   var fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
   var fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
 
-  if (fileTypeGroup !== "400" && fileTypeNumber !== "400") { // 400.400 = Estimates and invoices
+  // Integrated invoice, table Transactions, column name in settings dialog must start with "T."
+  if (column.startsWith("T.") && fileTypeGroup !== "400" && fileTypeNumber !== "400") { // 400.400 = Estimates and invoices
     var table = banDoc.table('Transactions');
     for (var i = 0; i < table.rowCount; i++) {
       var tRow = table.row(i);
       if (tRow.rowNr.toString() === originRow.toString()) {      
-        return tRow.value(column);
+        return tRow.value(column.substring(2)); //without "T."
+      }
+    }
+  }
+  // Estimates & Invoices application, table Items, column name in settings dialog must start with "I."
+  else if (column.startsWith("I.") && fileTypeGroup === "400" && fileTypeNumber === "400") {
+    var table = banDoc.table('Items');
+    for (var i = 0; i < table.rowCount; i++) {
+      var tRow = table.row(i);
+      var id = tRow.value("RowId");
+      if (id === itemNumber) {      
+        return tRow.value(column.substring(2)); //without "I."
       }
     }
   }
@@ -4326,7 +4323,7 @@ function isEstimatesInvoices(banDoc) {
 }
 ///////
 
-function getAdditionalDescriptions(banDoc, descriptionCell, originRow, itemNumber, userParam) {
+function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNumber, userParam) {
   /**
    * Check Description2, Description3, Description4, ... 
    * The content of those columns is printed on multiple lines
