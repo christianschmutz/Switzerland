@@ -1926,6 +1926,20 @@ function print_info_other_pages(repDocObj, invoiceObj, texts, userParam) {
     }
     tableRow.addCell(Banana.Converter.toLocaleDateFormat(invoiceObj.document_info.date),"",1);    
   }
+
+  if (IS_ESTIMATES_INVOICES) {
+    if (userParam.info_order_number) {
+      tableRow = infoTable.addRow();
+      tableRow.addCell(userParam[lang+'_text_info_order_number'] + ":","",1);
+      tableRow.addCell(invoiceObj.document_info.order_number,"",1);
+    }
+    if (userParam.info_order_date) {
+      tableRow = infoTable.addRow();
+      tableRow.addCell(userParam[lang+'_text_info_order_date'] + ":","",1);
+      tableRow.addCell(Banana.Converter.toLocaleDateFormat(invoiceObj.document_info.order_date),"",1);
+    }
+  }
+  
   if (userParam.info_customer) {
     tableRow = infoTable.addRow();
     tableRow.addCell(userParam[lang+'_text_info_customer'] + ":","",1);
