@@ -14,7 +14,7 @@
 //
 // @id = ch.banana.ch.invoice.ch10
 // @api = 1.0
-// @pubdate = 2021-09-01
+// @pubdate = 2021-09-07
 // @publisher = Banana.ch SA
 // @description = DEV [CH10] Layout with Swiss QR Code
 // @description.it = DEV [CH10] Layout with Swiss QR Code
@@ -51,8 +51,6 @@ var BAN_VERSION = "10.0.1";
 var BAN_EXPM_VERSION = "";
 var BAN_ADVANCED;
 
-var IS_ESTIMATES_INVOICES; // temporary variable, until "order number" and "order date" is implemented in integrated invoice 
-
 // Counter for the columns of the Details table
 var columnsNumber = 0;
 
@@ -74,9 +72,6 @@ function settingsDialog() {
   // Verify the banana version when user clicks on settings buttons
   var isCurrentBananaVersionSupported = bananaRequiredVersion(BAN_VERSION, BAN_EXPM_VERSION);
   if (isCurrentBananaVersionSupported) {
-
-    ///
-    isEstimatesInvoices(Banana.document);
 
     var userParam = initParam();
     var savedParam = Banana.document.getScriptSettings();
@@ -385,33 +380,31 @@ function convertParam(userParam) {
   }
   convertedParam.data.push(currentParam);
 
-  if (IS_ESTIMATES_INVOICES) { //At the moment only for estimates-invoices application
-    currentParam = {};
-    currentParam.name = 'info_order_number';
-    currentParam.parentObject = 'info_include';
-    currentParam.title = texts.param_info_order_number;
-    currentParam.type = 'bool';
-    currentParam.value = userParam.info_order_number ? true : false;
-    currentParam.defaultvalue = false;
-    currentParam.tooltip = texts.param_tooltip_info_order_number;
-    currentParam.readValue = function() {
-      userParam.info_order_number = this.value;
-    }
-    convertedParam.data.push(currentParam);
-
-    currentParam = {};
-    currentParam.name = 'info_order_date';
-    currentParam.parentObject = 'info_include';
-    currentParam.title = texts.param_info_order_date;
-    currentParam.type = 'bool';
-    currentParam.value = userParam.info_order_date ? true : false;
-    currentParam.defaultvalue = false;
-    currentParam.tooltip = texts.param_tooltip_info_order_date;
-    currentParam.readValue = function() {
-      userParam.info_order_date = this.value;
-    }
-    convertedParam.data.push(currentParam);
+  currentParam = {};
+  currentParam.name = 'info_order_number';
+  currentParam.parentObject = 'info_include';
+  currentParam.title = texts.param_info_order_number;
+  currentParam.type = 'bool';
+  currentParam.value = userParam.info_order_number ? true : false;
+  currentParam.defaultvalue = false;
+  currentParam.tooltip = texts.param_tooltip_info_order_number;
+  currentParam.readValue = function() {
+    userParam.info_order_number = this.value;
   }
+  convertedParam.data.push(currentParam);
+
+  currentParam = {};
+  currentParam.name = 'info_order_date';
+  currentParam.parentObject = 'info_include';
+  currentParam.title = texts.param_info_order_date;
+  currentParam.type = 'bool';
+  currentParam.value = userParam.info_order_date ? true : false;
+  currentParam.defaultvalue = false;
+  currentParam.tooltip = texts.param_tooltip_info_order_date;
+  currentParam.readValue = function() {
+    userParam.info_order_date = this.value;
+  }
+  convertedParam.data.push(currentParam);
 
   currentParam = {};
   currentParam.name = 'info_customer';
@@ -728,35 +721,33 @@ function convertParam(userParam) {
     }
     convertedParam.data.push(currentParam);
 
-    if (IS_ESTIMATES_INVOICES) { //At the moment only for estimates-invoices application
-      currentParam = {};
-      currentParam.name = langCode+'_text_info_order_number';
-      currentParam.parentObject = langCode;
-      currentParam.title = langTexts[langCodeTitle+'_param_text_info_order_number'];
-      currentParam.type = 'string';
-      currentParam.value = userParam[langCode+'_text_info_order_number'] ? userParam[langCode+'_text_info_order_number'] : '';
-      currentParam.defaultvalue = langTexts.order_number;
-      currentParam.tooltip = langTexts['param_tooltip_text_info_order_number'];
-      currentParam.language = langCode;
-      currentParam.readValueLang = function(langCode) {
-        userParam[langCode+'_text_info_order_number'] = this.value;
-      }
-      convertedParam.data.push(currentParam);
-
-      currentParam = {};
-      currentParam.name = langCode+'_text_info_order_date';
-      currentParam.parentObject = langCode;
-      currentParam.title = langTexts[langCodeTitle+'_param_text_info_order_date'];
-      currentParam.type = 'string';
-      currentParam.value = userParam[langCode+'_text_info_order_date'] ? userParam[langCode+'_text_info_order_date'] : '';
-      currentParam.defaultvalue = langTexts.order_date;
-      currentParam.tooltip = langTexts['param_tooltip_text_info_order_date'];
-      currentParam.language = langCode;
-      currentParam.readValueLang = function(langCode) {
-        userParam[langCode+'_text_info_order_date'] = this.value;
-      }
-      convertedParam.data.push(currentParam);
+    currentParam = {};
+    currentParam.name = langCode+'_text_info_order_number';
+    currentParam.parentObject = langCode;
+    currentParam.title = langTexts[langCodeTitle+'_param_text_info_order_number'];
+    currentParam.type = 'string';
+    currentParam.value = userParam[langCode+'_text_info_order_number'] ? userParam[langCode+'_text_info_order_number'] : '';
+    currentParam.defaultvalue = langTexts.order_number;
+    currentParam.tooltip = langTexts['param_tooltip_text_info_order_number'];
+    currentParam.language = langCode;
+    currentParam.readValueLang = function(langCode) {
+      userParam[langCode+'_text_info_order_number'] = this.value;
     }
+    convertedParam.data.push(currentParam);
+
+    currentParam = {};
+    currentParam.name = langCode+'_text_info_order_date';
+    currentParam.parentObject = langCode;
+    currentParam.title = langTexts[langCodeTitle+'_param_text_info_order_date'];
+    currentParam.type = 'string';
+    currentParam.value = userParam[langCode+'_text_info_order_date'] ? userParam[langCode+'_text_info_order_date'] : '';
+    currentParam.defaultvalue = langTexts.order_date;
+    currentParam.tooltip = langTexts['param_tooltip_text_info_order_date'];
+    currentParam.language = langCode;
+    currentParam.readValueLang = function(langCode) {
+      userParam[langCode+'_text_info_order_date'] = this.value;
+    }
+    convertedParam.data.push(currentParam);
 
     currentParam = {};
     currentParam.name = langCode+'_text_info_customer';
@@ -1560,9 +1551,6 @@ function printDocument(jsonInvoice, repDocObj, repStyleObj) {
   var isCurrentBananaVersionSupported = bananaRequiredVersion(BAN_VERSION, BAN_EXPM_VERSION);
   if (isCurrentBananaVersionSupported) {
 
-    ///
-    isEstimatesInvoices(Banana.document);
-
     var userParam = initParam();
     var savedParam = Banana.document.getScriptSettings();
     if (savedParam.length > 0) {
@@ -1816,24 +1804,20 @@ function print_info_first_page(repDocObj, invoiceObj, texts, userParam) {
   } else {
     rows++;
   }
-
-  if (IS_ESTIMATES_INVOICES) {
-    if (userParam.info_order_number) {
-      tableRow = infoTable.addRow();
-      tableRow.addCell(userParam[lang+'_text_info_order_number'] + ":","",1);
-      tableRow.addCell(invoiceObj.document_info.order_number,"",1);
-    } else {
-      rows++;
-    }
-    if (userParam.info_order_date) {
-      tableRow = infoTable.addRow();
-      tableRow.addCell(userParam[lang+'_text_info_order_date'] + ":","",1);
+  if (userParam.info_order_number) {
+    tableRow = infoTable.addRow();
+    tableRow.addCell(userParam[lang+'_text_info_order_number'] + ":","",1);
+    tableRow.addCell(invoiceObj.document_info.order_number,"",1);
+  }
+  if (userParam.info_order_date) {
+    tableRow = infoTable.addRow();
+    tableRow.addCell(userParam[lang+'_text_info_order_date'] + ":","",1);
+    if (invoiceObj.document_info.order_date && invoiceObj.document_info.order_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
       tableRow.addCell(Banana.Converter.toLocaleDateFormat(invoiceObj.document_info.order_date),"",1);
     } else {
-      rows++;
+      tableRow.addCell(invoiceObj.document_info.order_date,"",1);
     }
   }
-
   if (userParam.info_customer) {
     tableRow = infoTable.addRow();
     tableRow.addCell(userParam[lang+'_text_info_customer'] + ":","",1);
@@ -1926,20 +1910,20 @@ function print_info_other_pages(repDocObj, invoiceObj, texts, userParam) {
     }
     tableRow.addCell(Banana.Converter.toLocaleDateFormat(invoiceObj.document_info.date),"",1);    
   }
-
-  if (IS_ESTIMATES_INVOICES) {
-    if (userParam.info_order_number) {
-      tableRow = infoTable.addRow();
-      tableRow.addCell(userParam[lang+'_text_info_order_number'] + ":","",1);
-      tableRow.addCell(invoiceObj.document_info.order_number,"",1);
-    }
-    if (userParam.info_order_date) {
-      tableRow = infoTable.addRow();
-      tableRow.addCell(userParam[lang+'_text_info_order_date'] + ":","",1);
+  if (userParam.info_order_number) {
+    tableRow = infoTable.addRow();
+    tableRow.addCell(userParam[lang+'_text_info_order_number'] + ":","",1);
+    tableRow.addCell(invoiceObj.document_info.order_number,"",1);
+  }
+  if (userParam.info_order_date) {
+    tableRow = infoTable.addRow();
+    tableRow.addCell(userParam[lang+'_text_info_order_date'] + ":","",1);
+    if (invoiceObj.document_info.order_date && invoiceObj.document_info.order_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
       tableRow.addCell(Banana.Converter.toLocaleDateFormat(invoiceObj.document_info.order_date),"",1);
+    } else {
+      tableRow.addCell(invoiceObj.document_info.order_date,"",1);
     }
   }
-  
   if (userParam.info_customer) {
     tableRow = infoTable.addRow();
     tableRow.addCell(userParam[lang+'_text_info_customer'] + ":","",1);
@@ -2190,7 +2174,7 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         alignment = "left";
       }
 
-      if (IS_ESTIMATES_INVOICES && columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
+      if (columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
         var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
       }
@@ -2403,7 +2387,7 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         alignment = "left";
       }
 
-      if (IS_ESTIMATES_INVOICES && columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
+      if (columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
         var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
       }
@@ -4321,21 +4305,6 @@ function isBananaAdvanced(requiredVersion, expmVersion) {
     return false;
   }
 }
-
-
-////////
-function isEstimatesInvoices(banDoc) {
-  var fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
-  var fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
-  if (fileTypeGroup === "400" && fileTypeNumber === "400") {
-    IS_ESTIMATES_INVOICES = true;
-  }
-  else {
-    IS_ESTIMATES_INVOICES = false;
-  }
-
-}
-///////
 
 function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNumber, userParam) {
   /**
