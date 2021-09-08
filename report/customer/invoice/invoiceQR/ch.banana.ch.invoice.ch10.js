@@ -2229,9 +2229,16 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
         if (BAN_ADVANCED) {
-          userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
-          columnsName = columnsName.substring(2);
-          itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item); 
+          // json J.date, J.total
+          if (columnsName.startsWith("J.")) {
+            var valueName = columnsName.substring(2); 
+            itemValue = formatItemsValue(item[valueName], variables, columnsName, className, item);
+          }
+          else {
+            userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
+            columnsName = columnsName.substring(2);
+            itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item);            
+          }
         }
         else {
           customColumnMsg = "The customization with custom columns requires Banana Accounting+ Advanced";
@@ -2442,9 +2449,16 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
         if (BAN_ADVANCED) {
-          userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
-          columnsName = columnsName.substring(2);
-          itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item); 
+          // json J.date, J.total
+          if (columnsName.startsWith("J.")) {
+            var valueName = columnsName.substring(2); 
+            itemValue = formatItemsValue(item[valueName], variables, columnsName, className, item);
+          }
+          else {
+            userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
+            columnsName = columnsName.substring(2);
+            itemValue = formatItemsValue(userColumnValue, variables, columnsName, className, item);            
+          }
         }
         else {
           customColumnMsg = "The customization with custom columns requires Banana Accounting+ Advanced";
