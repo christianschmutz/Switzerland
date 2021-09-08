@@ -2174,7 +2174,7 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         alignment = "left";
       }
 
-      if (columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
+      if (columnsNames[j].trim().toLowerCase() === "item") { // Items column of estimates-invoices only
         var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
       }
@@ -2394,7 +2394,7 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         alignment = "left";
       }
 
-      if (columnsNames[j].trim().toLowerCase() === "items") { // Items column of estimates-invoices only
+      if (columnsNames[j].trim().toLowerCase() === "item") { // Items column of estimates-invoices only
         var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
       }
@@ -2810,10 +2810,6 @@ function formatItemsValue(value, variables, columnName, className, item) {
   else if (columnName === "vatrate" || columnName === "vat_rate") {
     itemFormatted.value = Banana.Converter.toLocaleNumberFormat(Banana.SDecimal.abs(value));
     itemFormatted.className = className;
-  }
-  else if (columnName === "items") { // Items column of estimates-invoices only
-    itemFormatted.value = value;
-    itemFormatted.className = className;    
   }
   else if (columnName) {
     itemFormatted.value = value;
