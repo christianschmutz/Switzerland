@@ -2086,13 +2086,19 @@ function print_text_begin(repDocObj, invoiceObj, texts, userParam) {
     textBegin = columnNamesToValues(invoiceObj, textBegin);
     tableRow = table.addRow();
     var textCell = tableRow.addCell("","begin_text",1);
-    addMdBoldText(textCell, textBegin);  
+    var textBeginLines = textBegin.split('\n');
+    for (var i = 0; i < textBeginLines.length; i++) {
+      addMdBoldText(textCell, textBeginLines[i]);
+    }
   }
   else if (!textBegin && textBeginOffer && invoiceObj.document_info.doc_type === "17") {
     textBeginOffer = columnNamesToValues(invoiceObj, textBeginOffer);
     tableRow = table.addRow();
     var textCell = tableRow.addCell("","begin_text",1);
-    addMdBoldText(textCell, textBeginOffer);
+    var textBeginLines = textBegin.split('\n');
+    for (var i = 0; i < textBeginLines.length; i++) {
+      addMdBoldText(textCell, textBeginLines[i]);
+    }
   }
 }
 
@@ -2184,6 +2190,8 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
           tableRow.addCell(" ", classNameEvenRow, 1);
         }
         else {
+          // Note: currently itemValue2 does not exist, this will add an empty line
+          // We don't remove this code because it will change how the invoice is printed and what the customer expect
           var itemValue = formatItemsValue(item.description, variables, columnsNames[j], className, item);
           var itemValue2 = formatItemsValue(item.description2, variables, columnsNames[j], className, item);
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
@@ -2404,6 +2412,8 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
           tableRow.addCell(" ", classNameEvenRow, 1);
         }
         else {
+          // Note: currently itemValue2 does not exist, this will add an empty line
+          // We don't remove this code because it will change how the invoice is printed and what the customer expect
           var itemValue = formatItemsValue(item.description, variables, columnsNames[j], className, item);
           var itemValue2 = formatItemsValue(item.description2, variables, columnsNames[j], className, item);
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
@@ -4366,6 +4376,7 @@ function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNu
     //
     // ESTIMATES & INVOICES
     //
+    /* Disabled, descriptions are merged by the estimate & invoice application
     else {
       //Return all xml column names
       let table = banDoc.table('Items');
@@ -4397,7 +4408,7 @@ function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNu
           }
         }
       }
-    }
+    } */
   }
   else {
     return;
