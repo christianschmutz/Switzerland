@@ -2229,6 +2229,17 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         var itemValue = formatItemsValue(item.unit_price.vat_rate, variables, columnsNames[j], className, item);
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
       }
+      else if (columnsNames[j].trim().toLowerCase() === "discount") {
+        var itemValue = "";
+        if (item.discount && item.discount.percent) {
+          itemValue = formatItemsValue(item.discount.percent, variables, columnsNames[j], className, item);
+          itemValue.value += "%";
+        }
+        else if (item.discount && item.discount.amount) {
+          itemValue = formatItemsValue(item.discount.amount, variables, columnsNames[j], className, item);
+        }
+        tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
+      }
       else {
         var userColumnValue = "";
         var columnsName = columnsNames[j];
@@ -2237,10 +2248,9 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
         if (BAN_ADVANCED) {
-          // json J.date, J.total
-          if (columnsName.startsWith("J.")) {
-            var valueName = columnsName.substring(2); 
-            itemValue = formatItemsValue(item[valueName], variables, columnsName, className, item);
+          //JSON contains a property of the item which is the name of a custom column
+          if (columnsName in item) {
+            itemValue = formatItemsValue(item[columnsName], variables, columnsName, className, item);
           }
           else {
             userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
@@ -2451,6 +2461,17 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         var itemValue = formatItemsValue(item.unit_price.vat_rate, variables, columnsNames[j], className, item);
         tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
       }
+      else if (columnsNames[j].trim().toLowerCase() === "discount") {
+        var itemValue = "";
+        if (item.discount && item.discount.percent) {
+          itemValue = formatItemsValue(item.discount.percent, variables, columnsNames[j], className, item);
+          itemValue.value += "%";
+        }
+        else if (item.discount && item.discount.amount) {
+          itemValue = formatItemsValue(item.discount.amount, variables, columnsNames[j], className, item);
+        }
+        tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
+      }
       else {
         var userColumnValue = "";
         var columnsName = columnsNames[j];
@@ -2459,10 +2480,9 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
         if (BAN_ADVANCED) {
-          // json J.date, J.total
-          if (columnsName.startsWith("J.")) {
-            var valueName = columnsName.substring(2); 
-            itemValue = formatItemsValue(item[valueName], variables, columnsName, className, item);
+          //JSON contains a property of the item which is the name of a custom column
+          if (columnsName in item) {
+            itemValue = formatItemsValue(item[columnsName], variables, columnsName, className, item);
           }
           else {
             userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
