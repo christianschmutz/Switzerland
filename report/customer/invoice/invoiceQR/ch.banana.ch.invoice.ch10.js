@@ -2095,7 +2095,7 @@ function print_text_begin(repDocObj, invoiceObj, texts, userParam) {
     textBeginOffer = columnNamesToValues(invoiceObj, textBeginOffer);
     tableRow = table.addRow();
     var textCell = tableRow.addCell("","begin_text",1);
-    var textBeginLines = textBegin.split('\n');
+    var textBeginLines = textBeginOffer.split('\n');
     for (var i = 0; i < textBeginLines.length; i++) {
       addMdBoldText(textCell, textBeginLines[i]);
     }
