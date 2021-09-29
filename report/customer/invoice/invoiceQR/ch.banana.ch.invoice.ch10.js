@@ -1028,7 +1028,7 @@ function convertParam(userParam) {
     currentParam.name = langCode+'_text_begin_offer';
     currentParam.parentObject = langCode+'_offer';
     currentParam.title = langTexts[langCodeTitle+'_param_text_begin_offer'];
-    currentParam.type = 'string';
+    currentParam.type = 'multilinestring';
     currentParam.value = userParam[langCode+'_text_begin_offer'] ? userParam[langCode+'_text_begin_offer'] : '';
     currentParam.defaultvalue = '';
     currentParam.tooltip = langTexts['param_tooltip_text_begin_offer'];
@@ -2092,12 +2092,17 @@ function print_text_begin(repDocObj, invoiceObj, texts, userParam) {
     }
   }
   else if (!textBegin && textBeginOffer && invoiceObj.document_info.doc_type === "17") {
-    textBeginOffer = columnNamesToValues(invoiceObj, textBeginOffer);
     tableRow = table.addRow();
     var textCell = tableRow.addCell("","begin_text",1);
     var textBeginLines = textBeginOffer.split('\n');
     for (var i = 0; i < textBeginLines.length; i++) {
-      addMdBoldText(textCell, textBeginLines[i]);
+      if (textBeginLines[i]) {
+        textBeginLines[i] = columnNamesToValues(invoiceObj, textBeginLines[i]);
+        addMdBoldText(textCell, textBeginLines[i]);
+      }
+      else {
+        addMdBoldText(textCell, " "); //empty lines
+      }
     }
   }
 }
