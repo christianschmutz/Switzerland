@@ -14,7 +14,7 @@
 //
 // @id = ch.banana.ch.invoice.ch10
 // @api = 1.0
-// @pubdate = 2021-09-07
+// @pubdate = 2021-10-04
 // @publisher = Banana.ch SA
 // @description = DEV [CH10] Layout with Swiss QR Code
 // @description.it = DEV [CH10] Layout with Swiss QR Code
@@ -2102,12 +2102,17 @@ function print_text_begin(repDocObj, invoiceObj, texts, userParam) {
   }
 
   if (textBegin) {
-    textBegin = columnNamesToValues(invoiceObj, textBegin);
     tableRow = table.addRow();
     var textCell = tableRow.addCell("","begin_text",1);
     var textBeginLines = textBegin.split('\n');
     for (var i = 0; i < textBeginLines.length; i++) {
-      addMdBoldText(textCell, textBeginLines[i]);
+      if (textBeginLines[i]) {
+        textBeginLines[i] = columnNamesToValues(invoiceObj, textBeginLines[i]);
+        addMdBoldText(textCell, textBeginLines[i]);
+      }
+      else {
+        addMdBoldText(textCell, " "); //empty lines
+      }
     }
   }
   else if (!textBegin && textBeginOffer && invoiceObj.document_info.doc_type === "17") {
@@ -2543,6 +2548,20 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
   tableRow = repTableObj.addRow();
   tableRow.addCell("", "border-top", columnsNumber);
 
+  //SUBTOTAL
+  //used only for the "Application Invoice"
+  //Print subtotal if there is discount or rounding or deposit
+  if (invoiceObj.billing_info.total_amount_vat_inclusive_before_discount
+    && (invoiceObj.billing_info.total_discount_vat_inclusive 
+    || invoiceObj.billing_info.total_rounding_difference 
+    || invoiceObj.billing_info.total_advance_payment)
+  ) {
+    
+    tableRow = repTableObj.addRow();
+    tableRow.addCell(texts.subtotal, "padding-left padding-right", columnsNumber-1);
+    tableRow.addCell(Banana.Converter.toLocaleNumberFormat(invoiceObj.billing_info.total_amount_vat_inclusive_before_discount, variables.decimals_amounts, true), "right padding-left padding-right", 1);
+  }
+
   //DISCOUNT
   //used only for the "Application Invoice"
   //on normal invoices discounts are entered as items in transactions
@@ -2557,7 +2576,7 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
   }
 
   //TOTAL ROUNDING DIFFERENCE
-  if (invoiceObj.billing_info.total_rounding_difference.length) {
+  if (invoiceObj.billing_info.total_rounding_difference) {
     tableRow = repTableObj.addRow();
     tableRow.addCell(texts.rounding, "padding-left padding-right", columnsNumber-1);
     tableRow.addCell(Banana.Converter.toLocaleNumberFormat(invoiceObj.billing_info.total_rounding_difference, variables.decimals_amounts, true), "right padding-left padding-right", 1);
@@ -2576,7 +2595,11 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
   }
 
   tableRow = repTableObj.addRow();
-  if (invoiceObj.billing_info.total_rounding_difference.length) {
+  if (invoiceObj.billing_info.total_amount_vat_inclusive_before_discount
+    && (invoiceObj.billing_info.total_discount_vat_inclusive 
+    || invoiceObj.billing_info.total_rounding_difference 
+    || invoiceObj.billing_info.total_advance_payment)
+  ) {
     tableRow.addCell("", "border-top", columnsNumber);
   } else {
     tableRow.addCell("", "", columnsNumber);
@@ -3562,6 +3585,7 @@ function setInvoiceTexts(language) {
     texts.discount = "Sconto";
     texts.deposit = "Acconto";
     texts.totalnet = "Totale netto";
+    texts.subtotal = "Sottototale";
     texts.vat = "IVA";
     texts.rounding = "Arrotondamento";
     texts.total = "TOTALE";
@@ -3729,6 +3753,7 @@ function setInvoiceTexts(language) {
     texts.discount = "Rabatt";
     texts.deposit = "Anzahlung";
     texts.totalnet = "Netto-Betrag";
+    texts.subtotal = "Zwischentotal";
     texts.vat = "MwSt";
     texts.rounding = "Rundung";
     texts.total = "Gesamtbetrag";
@@ -3852,8 +3877,8 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_font_family = "Schriftart eingeben (z.B. Arial, Helvetica, Times New Roman, usw.)";
     texts.param_tooltip_font_size = "Schriftgrösse eingeben (z.B. 10, 11, 12, usw.)";
     texts.param_tooltip_text_color = "Farbe eingeben (z.B. '#000000' oder 'Black')";
-    texts.param_tooltip_background_color_details_header = "Farbe eingeben (z.B. '#337ab7' oder 'Blau')";
-    texts.param_tooltip_text_color_details_header = "Textfarbe eingeben (z.B. '#ffffff' oder 'Weiss')";
+    texts.param_tooltip_background_color_details_header = "Farbe eingeben (z.B. '#337ab7' oder 'Blue')";
+    texts.param_tooltip_text_color_details_header = "Textfarbe eingeben (z.B. '#ffffff' oder 'White')";
     texts.param_tooltip_background_color_alternate_lines = "Farbe Zeilenhintergrund der Details eingeben (z.B. '#F0F8FF' oder 'LightSkyBlue')";
     texts.param_tooltip_javascript_filename = "Javaskript-Dateiname der 'ID'-Spalte Dokumente-Tabelle eingeben (z.B. Filejs)";
     texts.error1 = "Die Spaltennamen stimmen nicht mit den zu druckenden Texten überein. Prüfen Sie die Rechnungseinstellungen.";
@@ -3896,6 +3921,7 @@ function setInvoiceTexts(language) {
     texts.discount = "Rabais";
     texts.deposit = "Acompte";
     texts.totalnet = "Total net";
+    texts.subtotal = "Sous-total";
     texts.vat = "TVA";
     texts.rounding = "Arrondi";
     texts.total = "TOTAL";
@@ -3985,7 +4011,7 @@ function setInvoiceTexts(language) {
     texts.param_tooltip_text_info_invoice_number = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_date = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_order_number = "Insérez un texte pour remplacer le texte par défaut";
-    texts.param_tooltip_text_info_order_date = "Insérez un texte pour remplacer le texte par défaut"
+    texts.param_tooltip_text_info_order_date = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_customer = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_customer_vat_number = "Insérez un texte pour remplacer le texte par défaut";
     texts.param_tooltip_text_info_customer_fiscal_number = "Insérez un texte pour remplacer le texte par défaut";
@@ -4063,6 +4089,7 @@ function setInvoiceTexts(language) {
     texts.discount = "Discount";
     texts.deposit = "Deposit";
     texts.totalnet = "Total net";
+    texts.subtotal = "Subtotal";
     texts.vat = "VAT";
     texts.rounding = "Rounding";
     texts.total = "TOTAL";
@@ -4375,7 +4402,7 @@ function isBananaAdvanced(requiredVersion, expmVersion) {
 function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNumber, userParam) {
   /**
    * Check Description2, Description3, Description4, ... 
-   * The content of those columns is printed on multiple lines
+   * The content of those columns is printed on multiple lines after the main description.
    */
 
   if (userParam.details_additional_descriptions) {
