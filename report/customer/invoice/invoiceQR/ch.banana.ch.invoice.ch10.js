@@ -2223,11 +2223,7 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         alignment = "left";
       }
 
-      if (columnsNames[j].trim().toLowerCase() === "item") { // Items column of estimates-invoices only
-        var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
-        tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
-      }
-      else if (columnsNames[j].trim().toLowerCase() === "description") {
+      if (columnsNames[j].trim().toLowerCase() === "description") {
         //When 10:hdr with empty description, let empty line
         if (item.item_type && item.item_type.indexOf("header") === 0 && !item.description) {
           tableRow.addCell(" ", classNameEvenRow, 1);
@@ -2291,9 +2287,10 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
         //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
         if (BAN_ADVANCED) {
-          //JSON contains a property of the item which is the name of a custom column
-          if (columnsName in item) {
-            itemValue = formatItemsValue(item[columnsName], variables, columnsName, className, item);
+          //JSON contains a property with the name of the column (Item, Date)
+          //In JSON all names are lower case
+          if (columnsName.trim().toLowerCase() in item) {
+            itemValue = formatItemsValue(item[columnsName.trim().toLowerCase()], variables, columnsName, className, item);
           }
           else {
             userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
@@ -2454,12 +2451,8 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
       if (alignment !== "left" && alignment !== "center" && alignment !== "right") {
         alignment = "left";
       }
-
-      if (columnsNames[j].trim().toLowerCase() === "item") { // Items column of estimates-invoices only
-        var itemValue = formatItemsValue(item.number, variables, columnsNames[j], className, item);
-        tableRow.addCell(itemValue.value, classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);        
-      }
-      else if (columnsNames[j].trim().toLowerCase() === "description") {
+      
+      if (columnsNames[j].trim().toLowerCase() === "description") {
         //When 10:hdr with empty description, let empty line
         if (item.item_type && item.item_type.indexOf("header") === 0 && !item.description) {
           tableRow.addCell(" ", classNameEvenRow, 1);
@@ -2523,9 +2516,10 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
         //In settings dialog, must start with "T." for integrated ivoices or "I." for estimates invoices
         //This prevent conflicts with JSON fields.
         if (BAN_ADVANCED) {
-          //JSON contains a property of the item which is the name of a custom column
-          if (columnsName in item) {
-            itemValue = formatItemsValue(item[columnsName], variables, columnsName, className, item);
+          //JSON contains a property with the name of the column (Item, Date)
+          //In JSON all names are lower case
+          if (columnsName.trim().toLowerCase() in item) {
+            itemValue = formatItemsValue(item[columnsName.trim().toLowerCase()], variables, columnsName, className, item);
           }
           else {
             userColumnValue = getUserColumnValue(banDoc, item.origin_row, item.number, columnsName);
