@@ -124,6 +124,9 @@ function convertParam(userParam) {
   var lengthDetailsColumns = "";
   var lengthDetailsTexts = "";
 
+  var fileTypeGroup = Banana.document.info("Base", "FileTypeGroup");
+  var fileTypeNumber = Banana.document.info("Base", "FileTypeNumber");
+
   /*******************************************************************************************
   * INCLUDE
   *******************************************************************************************/
@@ -551,18 +554,22 @@ function convertParam(userParam) {
   }
   convertedParam.data.push(currentParam);
 
-  currentParam = {};
-  currentParam.name = 'details_additional_descriptions';
-  currentParam.parentObject = 'details_include';
-  currentParam.title = texts.param_details_additional_descriptions;
-  currentParam.type = 'bool';
-  currentParam.value = userParam.details_additional_descriptions ? true : false;
-  currentParam.defaultvalue = false;
-  currentParam.tooltip = texts.param_tooltip_details_additional_descriptions;
-  currentParam.readValue = function() {
-   userParam.details_additional_descriptions = this.value;
+  if (fileTypeGroup !== "400" && fileTypeNumber !== "400") {
+    currentParam = {};
+    currentParam.name = 'details_additional_descriptions';
+    currentParam.parentObject = 'details_include';
+    currentParam.title = texts.param_details_additional_descriptions;
+    currentParam.type = 'bool';
+    currentParam.value = userParam.details_additional_descriptions ? true : false;
+    currentParam.defaultvalue = false;
+    currentParam.tooltip = texts.param_tooltip_details_additional_descriptions;
+    currentParam.readValue = function() {
+     userParam.details_additional_descriptions = this.value;
+    }
+    convertedParam.data.push(currentParam);
+  } else {
+    userParam.details_additional_descriptions = false;
   }
-  convertedParam.data.push(currentParam);
 
   currentParam = {};
   currentParam.name = 'footer_include';
@@ -2451,7 +2458,7 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
       if (alignment !== "left" && alignment !== "center" && alignment !== "right") {
         alignment = "left";
       }
-      
+
       if (columnsNames[j].trim().toLowerCase() === "description") {
         //When 10:hdr with empty description, let empty line
         if (item.item_type && item.item_type.indexOf("header") === 0 && !item.description) {
