@@ -16,11 +16,11 @@
 // @api = 1.0
 // @pubdate = 2021-10-12
 // @publisher = Banana.ch SA
-// @description = DEV [CH10] Layout with Swiss QR Code
-// @description.it = DEV [CH10] Layout with Swiss QR Code
-// @description.de = DEV [CH10] Layout with Swiss QR Code
-// @description.fr = DEV [CH10] Layout with Swiss QR Code
-// @description.en = DEV [CH10] Layout with Swiss QR Code
+// @description = [CH10] Layout with Swiss QR Code
+// @description.it = [CH10] Layout with Swiss QR Code
+// @description.de = [CH10] Layout with Swiss QR Code
+// @description.fr = [CH10] Layout with Swiss QR Code
+// @description.en = [CH10] Layout with Swiss QR Code
 // @doctype = *
 // @task = report.customer.invoice
 // @includejs = swissqrcode.js
@@ -32,14 +32,14 @@
   SUMMARY
   =======
   New invoice layout.
-  This layout of invoice allows to set a lot of settings in order to 
-  Invoice zones:
-  - header
+  This layout of invoice allows to set a lot of settings in order to customize the printout.
+  Invoice elements:
+  - header (text and logo)
   - info
   - address
   - shipping address
   - begin text (title and begin text)
-  - details
+  - invoice details
   - final texts
   - footer/Swiss QR Code
 */
@@ -2248,7 +2248,7 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
           addMultipleLinesDescriptions(banDoc, descriptionCell, item.origin_row, userParam);
         }
       }
-      else if (columnsNames[j].trim().toLowerCase() === "quantity") {        
+      else if (columnsNames[j].trim().toLowerCase() === "quantity") {
         // If referenceUnit is empty we do not print the quantity.
         // With this we can avoid to print the quantity "1.00" for transactions that do not have  quantity,unit,unitprice.
         if (item.mesure_unit) {
@@ -2925,6 +2925,51 @@ function formatItemsValue(value, variables, columnName, className, item) {
 //====================================================================//
 // OTHER UTILITIES FUNCTIONS
 //====================================================================//
+function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, userParam) {
+  /**
+   * Check for "Description2", "Description3", "DescriptionX",..(where X is a number) columns in table Transactions. 
+   * The content of the columns can be printed on multiple lines (each column in a new line) after the main
+   * description (column "Description").
+   * Works only for integrated invoices.
+   */
+
+  if (userParam.details_additional_descriptions) {
+
+    if (IS_INTEGRATED_INVOICE) {
+
+      //Return all xml column names
+      let table = banDoc.table('Transactions');
+      let tColumnNames = table.columnNames;
+      let descriptionsColumns = [];
+
+      //Get only "DescriptionXX" columns
+      for (let i = 0; i < tColumnNames.length; i++) {
+        if (tColumnNames[i].match(/^Description\d+$/)) {
+          descriptionsColumns.push(tColumnNames[i]);
+        }
+      }
+
+      //Sort the array
+      descriptionsColumns.sort();
+
+      //Add each additional description as new paragraph in the description cell of the invoice details table
+      if (descriptionsColumns.length > 0) {
+        for (let i = 0; i < table.rowCount; i++) {
+          let tRow = table.row(i);
+          if (tRow.rowNr.toString() === originRow.toString()) {
+            for (let j = 0; j < descriptionsColumns.length; j++) {
+              let desc = tRow.value(descriptionsColumns[j]);
+              if (desc) {
+                addMdBoldText(descriptionCell, desc);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 function columnNamesToValues(invoiceObj, text) {
   /*
     Function that replaces the xml column names of the customer address
@@ -4431,48 +4476,4 @@ function isIntegratedInvoice() {
     }
   }
 }
-
-function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, userParam) {
-  /**
-   * Check Description2, Description3, Description4, ... 
-   * The content of those columns is printed on multiple lines after the main description.
-   */
-
-  if (userParam.details_additional_descriptions) {
-
-    if (IS_INTEGRATED_INVOICE) {
-
-      //Return all xml column names
-      let table = banDoc.table('Transactions');
-      let tColumnNames = table.columnNames;
-      let descriptionsColumns = [];
-
-      //Get only "DescriptionXX" columns
-      for (let i = 0; i < tColumnNames.length; i++) {
-        if (tColumnNames[i].match(/^Description\d+$/)) {
-          descriptionsColumns.push(tColumnNames[i]);
-        }
-      }
-
-      //Sort the array
-      descriptionsColumns.sort();
-
-      //Add each additional description as new paragraph in the description cell of the invoice details table
-      if (descriptionsColumns.length > 0) {
-        for (let i = 0; i < table.rowCount; i++) {
-          let tRow = table.row(i);
-          if (tRow.rowNr.toString() === originRow.toString()) {
-            for (let j = 0; j < descriptionsColumns.length; j++) {
-              let desc = tRow.value(descriptionsColumns[j]);
-              if (desc) {
-                addMdBoldText(descriptionCell, desc);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 
