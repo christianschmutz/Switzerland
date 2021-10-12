@@ -14,7 +14,7 @@
 //
 // @id = ch.banana.ch.invoice.ch10
 // @api = 1.0
-// @pubdate = 2021-10-04
+// @pubdate = 2021-10-12
 // @publisher = Banana.ch SA
 // @description = DEV [CH10] Layout with Swiss QR Code
 // @description.it = DEV [CH10] Layout with Swiss QR Code
@@ -50,6 +50,7 @@
 var BAN_VERSION = "10.0.1";
 var BAN_EXPM_VERSION = "";
 var BAN_ADVANCED;
+var IS_INTEGRATED_INVOICE;
 
 // Counter for the columns of the Details table
 var columnsNumber = 0;
@@ -72,6 +73,8 @@ function settingsDialog() {
   // Verify the banana version when user clicks on settings buttons
   var isCurrentBananaVersionSupported = bananaRequiredVersion(BAN_VERSION, BAN_EXPM_VERSION);
   if (isCurrentBananaVersionSupported) {
+
+    isIntegratedInvoice();
 
     var userParam = initParam();
     var savedParam = Banana.document.getScriptSettings();
@@ -123,9 +126,6 @@ function convertParam(userParam) {
 
   var lengthDetailsColumns = "";
   var lengthDetailsTexts = "";
-
-  var fileTypeGroup = Banana.document.info("Base", "FileTypeGroup");
-  var fileTypeNumber = Banana.document.info("Base", "FileTypeNumber");
 
   /*******************************************************************************************
   * INCLUDE
@@ -554,7 +554,7 @@ function convertParam(userParam) {
   }
   convertedParam.data.push(currentParam);
 
-  if (fileTypeGroup !== "400" && fileTypeNumber !== "400") {
+  if (IS_INTEGRATED_INVOICE) {
     currentParam = {};
     currentParam.name = 'details_additional_descriptions';
     currentParam.parentObject = 'details_include';
@@ -1576,6 +1576,8 @@ function printDocument(jsonInvoice, repDocObj, repStyleObj) {
   var isCurrentBananaVersionSupported = bananaRequiredVersion(BAN_VERSION, BAN_EXPM_VERSION);
   if (isCurrentBananaVersionSupported) {
 
+    isIntegratedInvoice();
+
     var userParam = initParam();
     var savedParam = Banana.document.getScriptSettings();
     if (savedParam.length > 0) {
@@ -2241,12 +2243,12 @@ function print_details_net_amounts(banDoc, repDocObj, invoiceObj, texts, userPar
           var itemValue = formatItemsValue(item.description, variables, columnsNames[j], className, item);
           var itemValue2 = formatItemsValue(item.description2, variables, columnsNames[j], className, item);
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
-          descriptionCell.addParagraph(itemValue.value, "");
+          addMdBoldText(descriptionCell, itemValue.value);
           descriptionCell.addParagraph(itemValue2.value, "");
-          addMultipleLinesDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
+          addMultipleLinesDescriptions(banDoc, descriptionCell, item.origin_row, userParam);
         }
       }
-      else if (columnsNames[j].trim().toLowerCase() === "quantity") {
+      else if (columnsNames[j].trim().toLowerCase() === "quantity") {        
         // If referenceUnit is empty we do not print the quantity.
         // With this we can avoid to print the quantity "1.00" for transactions that do not have  quantity,unit,unitprice.
         if (item.mesure_unit) {
@@ -2470,9 +2472,9 @@ function print_details_gross_amounts(banDoc, repDocObj, invoiceObj, texts, userP
           var itemValue = formatItemsValue(item.description, variables, columnsNames[j], className, item);
           var itemValue2 = formatItemsValue(item.description2, variables, columnsNames[j], className, item);
           var descriptionCell = tableRow.addCell("", classNameEvenRow + " " + alignment + " padding-left padding-right " + itemValue.className, 1);
-          descriptionCell.addParagraph(itemValue.value, "");
+          addMdBoldText(descriptionCell, itemValue.value);
           descriptionCell.addParagraph(itemValue2.value, "");
-          addMultipleLinesDescriptions(banDoc, descriptionCell, item.origin_row, item.number, userParam);
+          addMultipleLinesDescriptions(banDoc, descriptionCell, item.origin_row, userParam);
         }
       }
       else if (columnsNames[j].trim().toLowerCase() === "quantity") {
@@ -2872,11 +2874,19 @@ function formatItemsValue(value, variables, columnName, className, item) {
     itemFormatted.className = className;
   }
   else if (columnName === "quantity") {
-    itemFormatted.value = Banana.Converter.toLocaleNumberFormat(value,variables);
+    var decimal = variables;
+    if (!IS_INTEGRATED_INVOICE) {
+      decimal = getDecimalsCount(value);
+    }
+    itemFormatted.value = Banana.Converter.toLocaleNumberFormat(value,decimal);
     itemFormatted.className = className;
   }
   else if (columnName === "unitprice" || columnName === "unit_price") {
-    itemFormatted.value = Banana.Converter.toLocaleNumberFormat(value, variables.decimals_unit_price, true);
+    var decimal = variables.decimals_unit_price;
+    if (!IS_INTEGRATED_INVOICE) {
+      decimal = Math.max(2,getDecimalsCount(value));
+    }
+    itemFormatted.value = Banana.Converter.toLocaleNumberFormat(value, decimal, true);
     itemFormatted.className = className;
   }
   else if (columnName === "referenceunit" || columnName === "mesure_unit") {
@@ -3044,6 +3054,16 @@ function getQuantityDecimals(invoiceObj) {
   return arr[0]; //first element is the bigger
 }
 
+function getDecimalsCount(value) {
+  if (value) {
+    var separatorPos = value.indexOf('.')
+    if (separatorPos > -1) {
+      return value.length - separatorPos - 1;
+    }
+  }
+  return 0
+}
+
 function includeEmbeddedJavascriptFile(banDoc, texts, userParam) {
 
   /*
@@ -3102,11 +3122,8 @@ function getUserColumnValue(banDoc, originRow, itemNumber, column) {
     them into the invoice details table.
   */
 
-  var fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
-  var fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
-
   // Integrated invoice, table Transactions, column name in settings dialog must start with "T."
-  if (column.startsWith("T.") && fileTypeGroup !== "400" && fileTypeNumber !== "400") { // 400.400 = Estimates and invoices
+  if (column.startsWith("T.") && IS_INTEGRATED_INVOICE) {
     var table = banDoc.table('Transactions');
     for (var i = 0; i < table.rowCount; i++) {
       var tRow = table.row(i);
@@ -3116,7 +3133,7 @@ function getUserColumnValue(banDoc, originRow, itemNumber, column) {
     }
   }
   // Estimates & Invoices application, table Items, column name in settings dialog must start with "I."
-  else if (column.startsWith("I.") && fileTypeGroup === "400" && fileTypeNumber === "400") {
+  else if (column.startsWith("I.") && !IS_INTEGRATED_INVOICE) {
     var table = banDoc.table('Items');
     for (var i = 0; i < table.rowCount; i++) {
       var tRow = table.row(i);
@@ -4400,7 +4417,22 @@ function isBananaAdvanced(requiredVersion, expmVersion) {
   }
 }
 
-function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNumber, userParam) {
+function isIntegratedInvoice() {
+  if (Banana.document) {
+    let fileTypeGroup = Banana.document.info("Base", "FileTypeGroup");
+    let fileTypeNumber = Banana.document.info("Base", "FileTypeNumber");
+    if (fileTypeGroup !== "400" && fileTypeNumber !== "400") {
+      // Integrate invoice
+      IS_INTEGRATED_INVOICE = true;
+    }
+    else {
+      // App. Estimates and Invoices
+      IS_INTEGRATED_INVOICE = false;
+    }
+  }
+}
+
+function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, userParam) {
   /**
    * Check Description2, Description3, Description4, ... 
    * The content of those columns is printed on multiple lines after the main description.
@@ -4408,13 +4440,7 @@ function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNu
 
   if (userParam.details_additional_descriptions) {
 
-    let fileTypeGroup = banDoc.info("Base", "FileTypeGroup");
-    let fileTypeNumber = banDoc.info("Base", "FileTypeNumber");
-
-    //
-    // INTEGRATED INVOICE
-    //
-    if (fileTypeGroup !== "400" && fileTypeNumber !== "400") {
+    if (IS_INTEGRATED_INVOICE) {
 
       //Return all xml column names
       let table = banDoc.table('Transactions');
@@ -4439,53 +4465,13 @@ function addMultipleLinesDescriptions(banDoc, descriptionCell, originRow, itemNu
             for (let j = 0; j < descriptionsColumns.length; j++) {
               let desc = tRow.value(descriptionsColumns[j]);
               if (desc) {
-                descriptionCell.addParagraph(desc, "");
+                addMdBoldText(descriptionCell, desc);
               }
             }
           }
         }
       }
     }
-
-    //
-    // ESTIMATES & INVOICES
-    //
-    /* Disabled, descriptions are merged by the estimate & invoice application
-    else {
-      //Return all xml column names
-      let table = banDoc.table('Items');
-      let tColumnNames = table.columnNames;
-      let descriptionsColumns = [];
-
-      //Get only "DescriptionXX" columns
-      for (let i = 0; i < tColumnNames.length; i++) {
-        if (tColumnNames[i].match(/^Description\d+$/)) {
-          descriptionsColumns.push(tColumnNames[i]);
-        }
-      }
-
-      //Sort the array
-      descriptionsColumns.sort();
-
-      //Add each additional description as new paragraph in the description cell of the invoice details table
-      if (descriptionsColumns.length > 0) {
-        for (let i = 0; i < table.rowCount; i++) {
-          let tRow = table.row(i);
-          let id = tRow.value("RowId");
-          if (id === itemNumber) {
-            for (let j = 0; j < descriptionsColumns.length; j++) {
-              let desc = tRow.value(descriptionsColumns[j]);
-              if (desc) {
-                descriptionCell.addParagraph(desc, "");
-              }
-            }    
-          }
-        }
-      }
-    } */
-  }
-  else {
-    return;
   }
 }
 
