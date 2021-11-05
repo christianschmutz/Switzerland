@@ -1398,7 +1398,7 @@ function setInvoiceTexts(language) {
     texts.vat = 'MwSt.';
     texts.qty = 'Menge';
     texts.unit_ref = 'Einheit';
-    texts.unit_price = 'Preiseinheit';
+    texts.unit_price = 'Preis pro Einheit';
     texts.vat_number = 'Mehrwertsteuernummer: ';
     texts.bill_to = 'Rechnungsadresse';
     texts.shipping_to = 'Lieferadresse';
